@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>osfd-doxx</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <style>
+        :root { --bg: #F9F9F8; --card: #FFFFFF; --text: #2D2D2D; --muted: #7A7A7A; --accent: #D97757; --border: #E5E5E5; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 480px; padding: 24px 16px; display: flex; flex-direction: column; gap: 16px; }
+        .header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .logo { width: 40px; height: 40px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; }
+        .header h1 { font-size: 18px; font-weight: 600; }
+        .header p { font-size: 13px; color: var(--muted); }
+        .tabs { display: flex; gap: 8px; background: #EBEBE9; padding: 4px; border-radius: 10px; }
+        .tab { flex: 1; padding: 10px 0; text-align: center; font-size: 13px; font-weight: 500; color: var(--muted); border-radius: 8px; cursor: pointer; }
+        .tab.active { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: none; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .card-title { font-size: 14px; font-weight: 600; }
+        .btn-reset { background: transparent; border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--muted); }
+        .card-desc { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+        .text-input { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; margin-bottom: 12px; }
+        .btn-search { width: 100%; background: var(--accent); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; gap: 8px; }
+        .upload-area { border: 1.5px dashed #D1D1D1; border-radius: 12px; height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #FAFAFA; cursor: pointer; }
+        .upload-area i { font-size: 32px; color: var(--accent); margin-bottom: 12px; }
+        .upload-area p { font-size: 13px; color: var(--muted); font-weight: 500; }
+        #file-input { display: none; }
+        .processing-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .progress-bg { width: 100%; height: 6px; background: #EBEBE9; border-radius: 3px; overflow: hidden; margin-bottom: 16px; }
+        .progress-fill { height: 100%; width: 0; background: var(--accent); transition: width 0.1s linear; }
+        .log-box { background: #F9F9F8; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: monospace; font-size: 12px; color: var(--muted); min-height: 120px; line-height: 1.6; }
+        .result-top { text-align: center; margin-bottom: 20px; }
+        .result-icon { width: 48px; height: 48px; background: #FDF8F6; border: 1px solid #F2DACB; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--accent); margin: 0 auto 12px; }
+        .result-title { font-size: 18px; font-weight: 600; }
+        .result-sub { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+        .data-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); align-items: flex-start; gap: 10px; }
+        .data-row:last-child { border-bottom: none; }
+        .data-label { font-size: 13px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+        .data-val { font-size: 13px; font-weight: 500; text-align: right; max-width: 65%; word-break: break-word; line-height: 1.4; }
+        .blur { filter: blur(4px); opacity: 0.6; cursor: pointer; user-select: none; }
+        .blur:active { filter: blur(0); opacity: 1; }
+        .btn-maps { background: transparent; border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; text-decoration: none; color: var(--text); font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+        .valid { color: #10B981; font-weight: 600; }
+        .danger { color: #EF4444; font-weight: 600; }
+        .btn-close { width: 100%; background: var(--text); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 600; margin-top: 16px; cursor: pointer; }
+        #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--text); color: white; padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0; transition: 0.3s; z-index: 999; }
+        #toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="container">
+    <div class="header"><div class="logo"><i class="fa-solid fa-fingerprint"></i></div><div><h1>osfd-doxx</h1><p>Sistem Intelijen Terpadu</p></div></div>
+    <div class="tabs">
+        <div class="tab" id="tab-nomor" onclick="switchTab('nomor')"><i class="fa-solid fa-hashtag"></i> Nomor</div>
+        <div class="tab" id="tab-email" onclick="switchTab('email')"><i class="fa-regular fa-envelope"></i> Email</div>
+        <div class="tab active" id="tab-qris" onclick="switchTab('qris')"><i class="fa-solid fa-qrcode"></i> QRIS</div>
+    </div>
+    <div class="card" id="card-nomor">
+        <div class="card-header"><div class="card-title">Nomor Tracker</div><button class="btn-reset" onclick="resetUI('nomor')">Reset</button></div>
+        <input type="tel" id="input-nomor" class="text-input" placeholder="Contoh: 081234567890">
+        <button class="btn-search" onclick="proses('nomor')"><i class="fa-solid fa-magnifying-glass"></i> Lacak Nomor</button>
+    </div>
+    <div class="card" id="card-email">
+        <div class="card-header"><div class="card-title">Email Tracker</div><button class="btn-reset" onclick="resetUI('email')">Reset</button></div>
+        <input type="email" id="input-email" class="text-input" placeholder="Contoh: target@gmail.com">
+        <button class="btn-search" onclick="proses('email')"><i class="fa-solid fa-magnifying-glass"></i> Lacak Email</button>
+    </div>
+    <div class="card" id="card-qris" style="display: block;">
+        <div class="card-header"><div class="card-title">QRIS Decoder</div><button class="btn-reset" onclick="resetUI('qris')">Reset</button></div>
+        <div class="upload-area" onclick="document.getElementById('file-input').click()"><i class="fa-regular fa-image"></i><p>Klik untuk pilih gambar QRIS</p></div>
+        <input type="file" id="file-input" accept="image/*" onchange="proses('qris')">
+    </div>
+    <div class="card" id="card-proses">
+        <div class="processing-title"><i class="fa-solid fa-spinner fa-spin"></i> <span id="proses-text">Menganalisis...</span></div>
+        <div class="progress-bg"><div class="progress-fill" id="prog-fill"></div></div>
+        <div class="log-box" id="log-box"></div>
+    </div>
+    <div class="card" id="card-hasil">
+        <div class="result-top"><div class="result-icon" id="res-icon"></div><div class="result-title" id="res-title"></div><div class="result-sub" id="res-sub"></div></div>
+        <div id="res-data"></div>
+        <button class="btn-close" onclick="resetUI(activeTab)">Tutup Dossier</button>
+    </div>
+</div>
+<script>
+    let activeTab = 'qris';
+    function hideAll() { document.querySelectorAll('.card').forEach(el => el.style.display = 'none'); }
+    function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
+    function switchTab(tab) { activeTab = tab; document.querySelectorAll('.tab').forEach(el => el.classList.remove('active')); document.getElementById('tab-' + tab).classList.add('active'); hideAll(); document.getElementById('card-' + tab).style.display = 'block'; }
+    function resetUI(tab) { if (tab === 'nomor') document.getElementById('input-nomor').value = ''; if (tab === 'email') document.getElementById('input-email').value = ''; if (tab === 'qris') document.getElementById('file-input').value = ''; switchTab(tab); }
+    function showLoading(text, logs, callback) {
+        hideAll(); document.getElementById('card-proses').style.display = 'block'; document.getElementById('proses-text').textContent = text; document.getElementById('log-box').innerHTML = ''; document.getElementById('prog-fill').style.width = '0%';
+        let p = 0, logIdx = 0;
+        const interval = setInterval(() => {
+            p += Math.floor(Math.random() * 15) + 10; if (p > 99) p = 99; document.getElementById('prog-fill').style.width = p + '%';
+            if (logIdx < logs.length && p > (logIdx + 1) * (100 / logs.length)) { document.getElementById('log-box').innerHTML += `<div>> ${logs[logIdx]}</div>`; logIdx++; }
+        }, 100);
+        setTimeout(() => { clearInterval(interval); document.getElementById('prog-fill').style.width = '100%'; document.getElementById('log-box').innerHTML += `<div>> Selesai.</div>`; setTimeout(callback, 400); }, 2000);
+    }
+    function renderResult(title, sub, icon, data) {
+        document.getElementById('res-icon').innerHTML = `<i class="${icon}"></i>`; document.getElementById('res-title').textContent = title; document.getElementById('res-sub').textContent = sub;
+        const container = document.getElementById('res-data'); container.innerHTML = '';
+        data.forEach(item => {
+            const row = document.createElement('div'); row.className = 'data-row'; let valHTML = '';
+            if (item.maps) { const query = encodeURIComponent(item.maps); valHTML = `<a href="https://www.google.com/maps/search/?api=1&query=${query}" target="_blank" class="btn-maps"><i class="fa-brands fa-google"></i> Buka</a>`; }
+            else if (item.valid) { valHTML = `<span class="data-val valid">${item.v}</span>`; }
+            else if (item.danger) { valHTML = `<span class="data-val danger">${item.v}</span>`; }
+            else if (item.blur) { valHTML = `<span class="data-val blur" onclick="this.classList.remove('blur')">${item.v}</span>`; }
+            else { valHTML = `<span class="data-val">${item.v}</span>`; }
+            row.innerHTML = `<div class="data-label">${item.l}</div>${valHTML}`; container.appendChild(row);
+        });
+        hideAll(); document.getElementById('card-hasil').style.display = 'block';
+    }
+    function parseTLV(str) { let result = {}; let i = 0; while (i < str.length) { if (str.length - i < 4) break; let tag = str.substr(i, 2); let len = parseInt(str.substr(i + 2, 2), 10); if (isNaN(len) || i + 4 + len > str.length) break; let val = str.substr(i + 4, len); result[tag] = val; i += 4 + len; } return result; }
+    
+    function prosesQRIS() {
+        const file = document.getElementById('file-input').files[0]; if (!file) return;
+        showLoading("Decoding QRIS...", ["Membaca gambar...", "Parsing EMVCo..."], () => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = img.width; canvas.height = img.height; ctx.drawImage(img, 0, 0);
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    if (code) {
+                        let root = parseTLV(code.data); let mName = root['59'] || "Unknown"; let mCity = root['60'] || "Unknown"; let mPostal = root['61'] || ""; let nmid = "Not Found";
+                        if (root['51']) { let sub = parseTLV(root['51']); if (sub['02']) nmid = sub['02']; }
+                        if (nmid === "Not Found") { for (let i = 26; i <= 45; i++) { let t = i.toString().padStart(2, '0'); if (root[t]) { let sub = parseTLV(root[t]); if (sub['02']) { nmid = sub['02']; break; } } } }
+                        let mapQuery = `${mName}, ${mCity} ${mPostal}`.trim();
+                        renderResult("Dossier QRIS", "Hasil Decode", "fa-solid fa-qrcode", [
+                            { l: "MERCHANT", v: mName }, { l: "NMID", v: nmid, blur: true }, { l: "KOTA", v: mCity }, { l: "KODE POS", v: mPostal || "-" }, { l: "LOCATION", v: mapQuery, maps: mapQuery }, { l: "CRC", v: "VALID", valid: true }
+                        ]);
+                    } else { toast("Gagal decode."); resetUI('qris'); }
+                }; img.src = e.target.result;
+            }; reader.readAsDataURL(file);
+        });
+    }
+
+    async function prosesEmail() {
+        const email = document.getElementById('input-email').value.trim(); if (!email.includes('@')) return toast('Email invalid!');
+        showLoading("Query Dehashed API...", ["Menghubungi server proxy...", "Mengekstrak database..."], async () => {
+            let owner = "-", pass = "-", user = "-";
+            try {
+                const res = await fetch(`/api/osint?type=email&query=${email}`); const data = await res.json();
+                if (data && data.entries && data.entries.length > 0) { owner = data.entries[0].name || "-"; pass = data.entries[0].password || data.entries[0].hashed_password || "-"; user = data.entries[0].username || "-"; }
+            } catch (err) { toast("API Error / Limit"); }
+            renderResult("Dossier Email", "OSINT Result", "fa-regular fa-envelope", [
+                { l: "EMAIL", v: email }, { l: "PEMILIK", v: owner, blur: true }, { l: "USERNAME", v: user, blur: true }, { l: "PASSWORD", v: pass, blur: true, danger: true }
+            ]);
+        });
+    }
+
+    async function prosesNomor() {
+        const phone = document.getElementById('input-nomor').value.trim().replace(/\D/g, ''); if (!phone) return toast('Isi nomor!');
+        showLoading("Query Dehashed API...", ["Parsing prefix...", "Mengekstrak database..."], async () => {
+            let prov = "-"; let pfx = phone.startsWith('62') ? phone.substring(2, 5) : phone.substring(0, 3);
+            if (/^(811|812|813|821|822|823|851|852|853)/.test(pfx)) prov = "Telkomsel"; else if (/^(814|815|816|855|856|857|858)/.test(pfx)) prov = "Indosat"; else if (/^(817|818|819|859|877|878)/.test(pfx)) prov = "XL"; else if (/^(831|832|833|838)/.test(pfx)) prov = "Axis"; else if (/^(895|896|897|898|899)/.test(pfx)) prov = "Tri"; else if (/^(881|882|883|884|885|886|887|888|889)/.test(pfx)) prov = "Smartfren";
+            let owner = "-", nik = "-", leak = "-";
+            try {
+                const res = await fetch(`/api/osint?type=phone&query=${phone}`); const data = await res.json();
+                if (data && data.entries && data.entries.length > 0) { owner = data.entries[0].name || "-"; nik = data.entries[0].nik || "-"; leak = data.entries[0].database_name || "-"; }
+            } catch (err) { toast("API Error / Limit"); }
+            renderResult("Dossier Nomor", "OSINT Result", "fa-solid fa-hashtag", [
+                { l: "NOMOR", v: "+" + (phone.startsWith('62') ? phone : '62' + phone.replace(/^0/, '')) }, { l: "PROVIDER", v: prov }, { l: "PEMILIK", v: owner, blur: true }, { l: "NIK", v: nik, blur: true }, { l: "KEBOCORAN", v: leak, blur: true, danger: true }
+            ]);
+        });
+    }
+    function proses(tab) { if (tab === 'qris') prosesQRIS(); if (tab === 'email') prosesEmail(); if (tab === 'nomor') prosesNomor(); }
+</script>
+</body>
+          </html>
